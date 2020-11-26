@@ -1,0 +1,472 @@
+---
+title: "PM566 Final project"
+author: "Suyeon Ryu"
+date: "2020 11 25"
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r,echo=FALSE, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(data.table)
+library(dplyr)
+library(plotly)
+library(DT)
+
+midt<- data.table::fread("C:/Users/suyeo/PM566/midterm/data/BYAREA.txt")
+
+
+cln <- midt[midt$SITE == "Colon and Rectum"]
+
+cln_mort <- cln[cln$EVENT_TYPE == "Mortality"]
+cln_inc <- cln[cln$EVENT_TYPE == "Incidence"]
+
+
+
+# Noticed some rates are still characters. In order to plot, need to change to numeric!
+
+
+
+cln_mort <- cln_mort %>% mutate(
+  CRUDE_RATE = as.numeric(CRUDE_RATE),
+  YEAR = as.numeric(YEAR),
+  AGE_ADJUSTED_RATE = as.numeric(AGE_ADJUSTED_RATE),
+)
+
+
+cln_inc <- cln_inc %>% mutate(
+  CRUDE_RATE = as.numeric(CRUDE_RATE),
+  YEAR = as.numeric(YEAR),
+  AGE_ADJUSTED_RATE = as.numeric(AGE_ADJUSTED_RATE),
+)
+
+
+# checking and removing missing values 
+cln_mort %>%
+  select(everything()) %>%
+  summarise_all(funs(sum(is.na(.))))
+
+cln_inc %>%
+  select(everything()) %>%
+  summarise_all(funs(sum(is.na(.))))
+
+cln_mort <- na.omit(cln_mort)
+cln_inc <- na.omit(cln_inc)
+
+
+
+###################
+
+
+
+```
+
+
+
+
+
+```{r, include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+
+# trimming down (subsetting) the data because it is too big
+
+cln_inc <- cln_inc %>% slice(seq(1, n(), by = 2))
+cln_mort <-  cln_mort %>% slice(seq(1, n(), by = 2))
+
+
+cln_mort <- subset(cln_mort, cln_mort$CRUDE_RATE < 100)
+cln_mort <- subset(cln_mort, cln_mort$AGE_ADJUSTED_RATE < 200)
+cln_inc <- subset(cln_inc, cln_inc$AGE_ADJUSTED_RATE < 100)
+```
+
+
+
+
+
+
+```{r, include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+
+
+# Incidence rate table
+
+c99<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==1999])
+c00<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2000])
+c01<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2001])
+c02<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2002])
+c03<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2003])
+c04<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2004])
+c05<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2005])
+c06<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2006])
+c07<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2007])
+c08<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2008])
+c09<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2009])
+c10<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2010])
+c11<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2011])
+c12<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2012])
+c13<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2013])
+c14<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2014])
+c15<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2015])
+c16<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2016])
+c17<-summary(cln_inc$CRUDE_RATE[cln_inc$YEAR==2017])
+
+
+table1<-rbind(c99,c00,c01,c02,c03,c04,c05,c06,c07,c08,c09,c10,c11,c12,c13,c14,c15,c16,c17)
+inc_median <- table1[,3]
+inc_std <- table1[,5]-table1[,2]
+inc_mean <- table1[,4]
+
+inc_median <- round(inc_median, digits=1)
+inc_std <- round(inc_std, digits=2)
+inc_mean <- round(inc_mean, digits=2)
+
+
+rnames<-c('1999','2000','2001','2002','2003','2004','2005','2006','2007','2008','2009','2010','2011','2012','2013','2014','2015','2016','2017')
+cnames <- c("YEAR","Median Rate","S.D.","Mean")
+
+inc_table <- cbind(rnames, inc_median, inc_std, inc_mean)
+inc_table <- knitr::kable(inc_table,row.names=FALSE, col.names=cnames,caption = "TABLE 1. U.S. Colon Cancer Incidence Rate History",align = "cccc")
+
+inc_table
+
+               
+
+
+```
+
+
+
+```{r, include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+## Mortality Table 
+
+c99<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==1999])
+c00<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2000])
+c01<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2001])
+c02<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2002])
+c03<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2003])
+c04<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2004])
+c05<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2005])
+c06<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2006])
+c07<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2007])
+c08<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2008])
+c09<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2009])
+c10<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2010])
+c11<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2011])
+c12<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2012])
+c13<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2013])
+c14<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2014])
+c15<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2015])
+c16<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2016])
+c17<-summary(cln_mort$CRUDE_RATE[cln_mort$YEAR==2017])
+
+
+table1<-rbind(c99,c00,c01,c02,c03,c04,c05,c06,c07,c08,c09,c10,c11,c12,c13,c14,c15,c16,c17)
+mort_median <- table1[,3]
+mort_std <- table1[,5]-table1[,2]
+mort_mean <- table1[,4]
+
+mort_median <- round(mort_median, digits=1)
+mort_std <- round(mort_std, digits=2)
+mort_mean <- round(mort_mean, digits=2)
+
+
+rnames<-c('1999','2000','2001','2002','2003','2004','2005','2006','2007','2008','2009','2010','2011','2012','2013','2014','2015','2016','2017')
+cnames <- c("YEAR","Median Rate","S.D.","Mean")
+
+mort_table <- cbind(rnames, mort_median, mort_std, mort_mean)
+mort_table <- knitr::kable(mort_table,row.names=FALSE, col.names=cnames,caption = "TABLE 2. U.S. Colon Cancer Mortality Rate History",align = "cccc")
+
+mort_table
+
+
+
+```
+
+
+
+
+
+
+# Preliminary Results 
+
+## Colorectal Cancer Incidence and Mortality Rates and Trends
+
+Overall, the trends in colorectal cancer incidence rate shows decreasing trend over the period of 18 years (1999 to 2017). The rate decreasing slope was steeper until early 2000, then shows stabilizing trend from 2007 to 2017 (Figure 1-2). Regardless, the overall mortality from colon cancer in U.S. maintained around same rate over 17 years, without showing particularly decreasing trends (Figure 2-2). 
+
+
+
+```{r, include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+
+
+cln_inc %>%
+  plot_ly(x = ~YEAR, y = ~CRUDE_RATE,
+          type = 'scatter',
+          mode = 'markers',
+          color = ~AREA,
+          colors = "Blues",
+          size = ~CRUDE_RATE) %>%
+  layout(title="Fig 1. Interactive Overall U.S. Colon Cancer INCIDENCE rate (1999 to 2017)")
+
+
+cln_mort %>%
+  plot_ly(x = ~YEAR, y = ~CRUDE_RATE,
+          type = 'scatter',
+          mode = 'markers',
+          color = ~AREA,
+          colors = "Reds",
+          size = ~CRUDE_RATE) %>%
+  layout(title="Fig 2. Interactive Overall U.S. Colon Cancer MORTALITY rate (1999 to 2017)")
+
+
+
+
+
+```
+
+
+
+```{r, include = TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+# Trend of colon cancer incidence and mortality over the years (maybe line graph)
+
+ggplot(cln_inc, aes(x=YEAR, y=CRUDE_RATE))+
+  geom_point(color="grey")+
+  theme_minimal()+
+  geom_smooth(method="loess", color = "blue", fill="darkblue")+
+  ggtitle("FIGURE 1-2.Trend in Overall U.S. Colon Cancer Incidence Crude Rate")
+
+ggplot(cln_mort, aes(x=YEAR, y=CRUDE_RATE))+
+  geom_point(color="grey")+
+  theme_minimal()+
+  geom_smooth(method="loess", color="red", fill="darkred")+
+  ggtitle("FIGURE 2-2. Trend in Overall U.S. Colon Cancer Mortality Crude Rate")
+
+
+```
+
+
+
+
+## Comparison of Colon Cancer Incidence Rates between EAST and WEST
+
+
+To ease the understanding of the geographical representation of each coast, the states which colon cancer data were collected from were highlighted (FIGURE 3). The bar graph of colorectal cancer incidence rates of each coast as well as the un-considered areas by year were plotted(FIGURE 4). Then, to aid the comparison of incidence rate over the years, the scatterplot of each coasts with regression lines were plotted (FIGURE 5). Based on the comparison scatterplot with regression lines, it is apparent that the incidence rates are decreasing over the years, but the rate of decreasing is slower for the West Coast compared to the East Coast. 
+
+
+
+
+```{r,include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+### INTERACTIVE MAP for Considered States and Their Mortality Rates
+# Get state abbreviations and map to state names
+
+cln_mort$code <- ifelse(cln_mort$AREA == "New York", "NY",
+                        ifelse(cln_mort$AREA=="Pennsylvania", "PA",
+                               ifelse(cln_mort$AREA =="New Jersey", "NJ",
+                                       ifelse(cln_mort$AREA == "Virginia", "VA",
+                                              ifelse(cln_mort$AREA == "North Carolina", "NC",
+                                                     ifelse(cln_mort$AREA == "South Carolina", "SC",
+                                                            ifelse(cln_mort$AREA == "Georgia","GA",
+                                                                   ifelse(cln_mort$AREA == "Washington","WA",
+                                                                          ifelse(cln_mort$AREA == "Oregon","OR",
+                                                                                 ifelse(cln_mort$AREA == "California","CA","."))))))))))
+
+
+
+
+```
+```{r,include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+
+df <- cln_mort %>% select(YEAR,code, POPULATION, CRUDE_RATE, AGE_ADJUSTED_RATE) # select data
+df <- subset(df, df$AGE_ADJUSTED_RATE < 100)
+
+
+
+df$hover <- with(df, paste(df$code, '<br>',df$AGE_ADJUSTED_RATE,'<br>', "Age adjusted rate",'<br>',df$CRUDE_RATE,'<br>', "Crude rate", '<br>',df$POPULATION,'<br>',"Population"))
+
+# give state boundaries a white border
+l <- list(color = toRGB("white"), width = 2)
+# specify some map projection/options
+g <- list(
+  scope = 'usa',
+  projection = list(type = 'albers usa'),
+  showlakes = TRUE,
+  lakecolor = toRGB('white')
+)
+
+fig <- plot_geo(df, locationmode = 'USA-states')
+fig <- fig %>% add_trace(
+    z = ~df$AGE_ADJUSTED_RATE, text = ~hover, locations = ~code,
+    color = ~df$AGE_ADJUSTED_RATE, colors = "Spectral"
+  )
+fig <- fig %>% colorbar(title = "Age adjusted rate(per 100k population)")
+fig <- fig %>% layout(
+    title = 'U.S.Colorectal Cancer Mortality Comparison Study : Considered States <br>(Hover for breakdown)',
+    geo = g
+  )
+
+fig
+
+
+```
+
+
+
+```{r, include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+#EAST versus WEST
+
+#EAST will include New York, Pennsylvania, New Jersey, Virginia, North and South Carolina, Georgia
+#WEST will include Washington, Oregon, California
+
+us_map <- map_data("state")
+
+east_states <- c("new york", "pennsylvania","new jersey","virginia","north carolina","south carolina","georgia")
+west_states <- c("washington","oregon","california")
+
+ggplot(us_map, aes(x=long, y=lat, group = group)) +
+  geom_polygon(fill="grey", colour = "white") +
+  geom_polygon(fill="palevioletred1", data = filter(us_map, region %in% east_states)) +
+  geom_polygon(fill="mediumpurple", data = filter(us_map, region %in% west_states))+
+  ggtitle("FIGURE 3. U.S Colorectal Cancer Comparison Covered Area East versus West")
+
+
+```
+
+
+
+### Colorectal Cancer Incidence **Crude** Rates
+
+
+```{r, include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+#make new variables for east and west states
+
+cln_inc$westeast <- ifelse(cln_inc$AREA == "New York"|cln_inc$AREA == "Pennsylvania"|cln_inc$AREA == "New Jersey"|cln_inc$AREA == "Virginia"|cln_inc$AREA == "North Carolina"|cln_inc$AREA == "South Carolina"|cln_inc$AREA == "Georgia", "East Coast",
+                           ifelse(cln_inc$AREA =="Washington"|cln_inc$AREA =="Oregon"|cln_inc$AREA == "California", "West Coast","Not Considered" ))
+
+
+
+
+
+#plotting bargraph of crude rate including "non considering area"
+p <- ggplot(data=cln_inc, aes(x=YEAR, y=CRUDE_RATE, fill=westeast))+
+  geom_bar(stat="identity", color="black", position=position_dodge())+
+  scale_fill_manual(values=c("palevioletred1","#999999","mediumpurple"))+
+  theme_minimal()+
+  ggtitle("FIGURE 4. U.S. Colorectal Cancer Incidence Crude Rate by Areas")
+
+p
+
+#excluding not considered area from the data set
+
+cln_mort <- subset(cln_mort, cln_mort$AGE_ADJUSTED_RATE < 150)
+cln_inc <- subset(cln_inc, cln_inc$AGE_ADJUSTED_RATE < 500)
+
+cln3 <-cln_inc[!(cln_inc$westeast=="Not Considered"),]
+
+#plotting scatterplot of crude rate east versus west
+
+ggplot(data=cln3, aes(x=YEAR, y=CRUDE_RATE, color=westeast, shape=westeast)) +
+  geom_point() + 
+  geom_smooth(method=lm, se=TRUE, fullrange=TRUE)+
+  scale_shape_manual(values=c(3, 17))+ 
+  scale_color_manual(values=c("palevioletred1","mediumpurple"))+
+  scale_size_manual(values=c(7,7))+
+  theme(legend.position="right")+
+  ggtitle("Fig 5. U.S. Colon Cancer Incidence Crude Rate West Coast vs. East Coast")
+
+
+
+
+```
+
+
+
+### Colorectal Cancer Incidence **Age-adjusted** Rates
+
+Because the data is covering fairly large spectrum of age(<1 to 85+), the age-adjusted data were used to plot the graphs of colorectal cancer incidence rates. The unconsidered areas were excluded from the data set. With the age-adjusted crude rate, not only the West Coast show the higher incidence rate over all years covered, but also it was more apparent that the incidence decreasing trend is significantly slower for the West Coast area (FIGURE 6).
+
+```{r, include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+#removing outlier
+
+cln4 <- cln3
+
+
+ggplot(data=cln4, aes(x=YEAR, y=AGE_ADJUSTED_RATE, color=westeast, shape=westeast)) +
+  geom_point() + 
+  geom_smooth(method=lm, se=TRUE, fullrange=TRUE)+
+  scale_shape_manual(values=c(3, 17))+ 
+  scale_color_manual(values=c("palevioletred1","mediumpurple"))+
+  scale_size_manual(values=c(7,7))+
+  theme(legend.position="right")+
+  ggtitle("Fig 6. U.S. Colon Cancer AGE Adjusted Rate West Coast vs. East Coast")
+
+
+
+```
+
+
+
+
+## Comparison of Colon Cancer Mortality Rates between EAST and WEST
+### Colorectal Cancer Mortality **Crude** Rates
+
+The U.S. colorectal cancer mortality rates were compared between West and East coasts through exploratory data analysis. From the regression line from the scatterplot(FIGURE 7), the slope of the West Coast mortality rate is positive; that is, the colon cancer mortality rate in the west coast area were increasing over the 17 years. East coast colorectal mortality rates show decreasing trend. Again, as the age range is big, the age-adjusted rates were compared to minimize potential bias within the data(FIGURE 8). With age-adjusted colorectal mortality data, both area's mortality rates show decreasing trends. However, the decreasing slopes are noticeably different; the West Coast decreasing trend is way slower. 
+
+```{r, include=TRUE,echo=FALSE, warning=FALSE, message = FALSE}
+# Do the same with mortality 
+
+
+
+cln_mort$westeast <- ifelse(cln_mort$AREA == "New York"|cln_mort$AREA == "Pennsylvania"|cln_mort$AREA == "New Jersey"|cln_mort$AREA == "Virginia"|cln_mort$AREA == "North Carolina"|cln_mort$AREA == "South Carolina"|cln_mort$AREA == "Georgia", "East Coast",
+                           ifelse(cln_mort$AREA =="Washington"|cln_mort$AREA =="Oregon"|cln_mort$AREA == "California", "West Coast","Not Considered" ))
+
+
+
+
+
+
+
+#excluding not considered area from the data set
+
+mort3 <-cln_mort[!(cln_mort$westeast=="Not Considered"),]
+
+#plotting scatterplot of crude rate east versus west
+
+
+ggplot(data=mort3, aes(x=YEAR, y=CRUDE_RATE, color=westeast, shape=westeast)) +
+  geom_point() + 
+  geom_smooth(method=lm, se=TRUE, fullrange=TRUE)+
+  scale_shape_manual(values=c(3, 17))+ 
+  scale_color_manual(values=c("palevioletred1","mediumpurple"))+
+  scale_size_manual(values=c(7,7))+
+  theme(legend.position="right")+
+  ggtitle("Fig 7. U.S. Colon Cancer Mortality Crude Rate West Coast vs. East Coast")
+
+
+
+
+ggplot(data=mort3, aes(x=YEAR, y=AGE_ADJUSTED_RATE, color=westeast, shape=westeast)) +
+  geom_point() + 
+  geom_smooth(method=lm, se=TRUE, fullrange=TRUE)+
+  scale_shape_manual(values=c(3, 17))+ 
+  scale_color_manual(values=c("palevioletred1","mediumpurple"))+
+  scale_size_manual(values=c(7,7))+
+  theme(legend.position="right")+
+  ggtitle("Fig 8. U.S. Colon Cancer Age-Adjusted Mortality")
+
+
+
+```

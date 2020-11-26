@@ -1,0 +1,20 @@
+name: "Suyeon Ryu's website"
+output_dir: "."
+navbar:
+  title: "U.S. Colon Incidence/Mortality Comparison"
+  left:
+    - text : "Home"
+    - href : index.html
+    - text : "PDF download"
+    - href : PM566_final_project.pdf
+    - text : "Dataset Link"
+    - href : https://www.cdc.gov/cancer/uscs/dataviz/download_data.htm
+  right:
+    - text : "Contact Author"
+    - href : https://www.linkedin.com/in/sue-suyeon-ryu-1a6315a3/
+output:
+  html_document:
+    theme: paper
+    css: styles.css
+    
+  
